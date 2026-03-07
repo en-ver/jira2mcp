@@ -1,12 +1,14 @@
 """Jira MCP Server — Model Context Protocol server for Jira Cloud."""
 
+from importlib.metadata import version as _pkg_version
+
 from fastmcp import FastMCP
 
 from .tools import tools
 
 mcp = FastMCP(
     "jira2mcp",
-    version="0.1.0",
+    version=_pkg_version("jira2mcp"),
     instructions=(
         "Jira Cloud integration server. All tools are prefixed with 'jira_'.\n"
         "Key workflows:\n"
