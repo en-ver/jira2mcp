@@ -11,3 +11,6 @@ wheels/
 
 # MCP config (contains local absolute paths)
 .mcp.json
+
+# direnv (may contain secrets)
+.envrc
