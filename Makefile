@@ -42,8 +42,8 @@ endif
 	$(MAKE) check
 	@# Commit, tag, and push
 	git add pyproject.toml
-	git commit -m "release: v$(v)"
-	git tag "v$(v)"
+	git diff --cached --quiet && echo "Version already set to $(v), skipping commit." || git commit -m "release: v$(v)"
+	git tag -f "v$(v)"
 	git push origin main --tags
 	@echo "Release v$(v) pushed. CI will build, create GitHub Release, and publish to PyPI."
 
