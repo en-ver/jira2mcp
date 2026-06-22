@@ -43,7 +43,7 @@ def write_version(pyproject_path: Path, new_version: str) -> None:
     parse_version(new_version)
     content = pyproject_path.read_text()
     updated_content, replacements = VERSION_PATTERN.subn(
-        rf"\g<1>{new_version}\3", content, count=1
+        rf"\g<1>{new_version}\3", content
     )
     if replacements != 1:
         msg = f"Could not uniquely update version in {pyproject_path}"
