@@ -17,28 +17,43 @@ def test_parse_json_object_parses_dictionary_values() -> None:
     assert parsed == {"summary": "Test", "nested": {"count": 2}}
 
 
-def test_parse_json_object_rejects_invalid_json() -> None:
-    with pytest.raises(typer.BadParameter) as exc_info:
+def test_parse_json_object_rejects_invalid_json(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    with pytest.raises(typer.Exit) as exc_info:
         parse_json_object('{"summary": }', option_name="--payload")
 
+    captured = capsys.readouterr()
+
+    assert exc_info.value.exit_code == 2
     assert (
-        str(exc_info.value)
-        == "must be valid JSON (Expecting value at line 1, column 13)"
+        captured.err
+        == "--payload: must be valid JSON (Expecting value at line 1, column 13)\n"
     )
-    assert exc_info.value.param_hint == "--payload"
+    assert captured.out == ""
 
 
-def test_parse_json_object_rejects_non_object_json() -> None:
-    with pytest.raises(typer.BadParameter) as exc_info:
+def test_parse_json_object_rejects_non_object_json(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    with pytest.raises(typer.Exit) as exc_info:
         parse_json_object("[1, 2, 3]", option_name="--payload")
 
-    assert str(exc_info.value) == "must be a JSON object"
-    assert exc_info.value.param_hint == "--payload"
+    captured = capsys.readouterr()
+
+    assert exc_info.value.exit_code == 2
+    assert captured.err == "--payload: must be a JSON object\n"
+    assert captured.out == ""
 
 
-def test_parse_fields_json_uses_expected_option_name() -> None:
-    with pytest.raises(typer.BadParameter) as exc_info:
+def test_parse_fields_json_uses_expected_option_name(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    with pytest.raises(typer.Exit) as exc_info:
         parse_fields_json("[1, 2, 3]")
 
-    assert str(exc_info.value) == "must be a JSON object"
-    assert exc_info.value.param_hint == "--fields-json"
+    captured = capsys.readouterr()
+
+    assert exc_info.value.exit_code == 2
+    assert captured.err == "--fields-json: must be a JSON object\n"
+    assert captured.out == ""
