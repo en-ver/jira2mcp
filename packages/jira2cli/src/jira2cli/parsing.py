@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-import typer
+from jira2cli.output import raise_cli_usage_error
 
 
 def parse_json_object(
@@ -20,16 +20,13 @@ def parse_json_object(
     try:
         parsed = json.loads(value)
     except json.JSONDecodeError as exc:
-        raise typer.BadParameter(
-            (
-                "must be valid JSON "
-                f"({exc.msg} at line {exc.lineno}, column {exc.colno})"
-            ),
+        raise_cli_usage_error(
+            f"must be valid JSON ({exc.msg} at line {exc.lineno}, column {exc.colno})",
             param_hint=option_name,
-        ) from exc
+        )
 
     if not isinstance(parsed, dict):
-        raise typer.BadParameter("must be a JSON object", param_hint=option_name)
+        raise_cli_usage_error("must be a JSON object", param_hint=option_name)
 
     return parsed
 
