@@ -59,10 +59,27 @@ def error_exit_code(error: Jira2AIError) -> int:
     return 1
 
 
+class _CLIUsageError(typer.BadParameter):
+    """Internal usage error that preserves BadParameter semantics."""
+
+
+def raise_cli_usage_error(
+    message: str,
+    *,
+    param_hint: str | None = None,
+) -> NoReturn:
+    """Write a CLI usage error to stderr before Typer exits with code 2."""
+    if param_hint:
+        typer.echo(f"{param_hint}: {message}", err=True)
+    else:
+        typer.echo(message, err=True)
+    raise _CLIUsageError(message, param_hint=param_hint)
+
+
 def validate_output_options(*, json_output: bool, raw_output: bool) -> None:
     """Reject conflicting structured output flags."""
     if json_output and raw_output:
-        raise typer.BadParameter(
+        raise_cli_usage_error(
             "Use only one of --json or --raw.",
             param_hint="--json / --raw",
         )
@@ -88,6 +105,7 @@ __all__ = [
     "format_cli_error",
     "raise_cli_error",
     "raise_cli_exception",
+    "raise_cli_usage_error",
     "render_operation_result",
     "validate_output_options",
 ]
