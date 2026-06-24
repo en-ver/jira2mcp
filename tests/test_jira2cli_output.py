@@ -97,9 +97,14 @@ def test_raise_cli_exception_handles_non_core_errors(
     assert captured.out == ""
 
 
-def test_validate_output_options_rejects_both_json_and_raw() -> None:
-    with pytest.raises(typer.BadParameter) as exc_info:
+def test_validate_output_options_rejects_both_json_and_raw(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    with pytest.raises(typer.Exit) as exc_info:
         validate_output_options(json_output=True, raw_output=True)
 
-    assert str(exc_info.value) == "Use only one of --json or --raw."
-    assert exc_info.value.param_hint == "--json / --raw"
+    captured = capsys.readouterr()
+
+    assert exc_info.value.exit_code == 2
+    assert captured.err == "--json / --raw: Use only one of --json or --raw.\n"
+    assert captured.out == ""
