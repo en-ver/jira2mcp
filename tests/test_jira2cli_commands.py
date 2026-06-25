@@ -3,7 +3,6 @@ from __future__ import annotations
 import inspect
 from types import SimpleNamespace
 
-import click
 import pytest
 from jira2ai_core.errors import (
     AttachmentDownloadError,
@@ -20,7 +19,7 @@ from typer.testing import CliRunner
 runner = CliRunner()
 
 
-def _get_registered_command(command_name: str) -> click.Command:
+def _get_registered_command(command_name: str):
     return get_command(app).commands[command_name]
 
 
