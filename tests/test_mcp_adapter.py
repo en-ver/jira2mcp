@@ -19,7 +19,7 @@ def test_adapt_operation_result_returns_plain_text_for_text_only_results() -> No
     assert adapted == "formatted output"
 
 
-def test_adapt_operation_result_returns_tool_result_for_raw_structured_data() -> None:
+def test_adapt_operation_result_preserves_dict_raw_structured_data() -> None:
     payload = {"key": "PROJ-123", "labels": ["backend", "urgent"]}
     result = HelperResult.with_data("formatted output", payload)
 
@@ -27,6 +27,23 @@ def test_adapt_operation_result_returns_tool_result_for_raw_structured_data() ->
 
     assert isinstance(adapted, ToolResult)
     assert adapted.structured_content == payload
+    assert len(adapted.content) == 1
+    assert cast(Any, adapted.content[0]).text == json.dumps(
+        payload, indent=2, default=str
+    )
+
+
+def test_adapt_operation_result_wraps_list_raw_structured_data() -> None:
+    payload = [
+        {"id": "summary", "name": "Summary", "required": True},
+        {"id": "labels", "name": "Labels", "required": False},
+    ]
+    result = HelperResult.with_data("formatted output", payload)
+
+    adapted = adapt_operation_result(result, raw=True)
+
+    assert isinstance(adapted, ToolResult)
+    assert adapted.structured_content == {"data": payload}
     assert len(adapted.content) == 1
     assert cast(Any, adapted.content[0]).text == json.dumps(
         payload, indent=2, default=str
