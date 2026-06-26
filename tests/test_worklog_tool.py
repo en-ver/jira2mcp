@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 import json
+from textwrap import dedent
 from typing import Any, cast
 
 import pytest
@@ -75,7 +76,46 @@ def test_worklog_report_delegates_to_helper_group(fake_ctx, monkeypatch) -> None
 
 
 def test_worklog_report_raw_returns_tool_result(fake_ctx, monkeypatch) -> None:
-    payload = {"rowCount": 1, "rows": [{"issueKey": "PROJ-1"}]}
+    payload = {
+        "issueSelector": {
+            "jql": "project = PROJ",
+            "maxIssues": 2,
+            "issuesReturned": 2,
+            "truncated": True,
+            "nextPageToken": "tok-more",
+            "total": 5,
+        },
+        "rowCount": 2,
+        "rows": [
+            {
+                "issueKey": "PROJ-1",
+                "updateAuthor": {
+                    "displayName": "Reviewer",
+                    "accountId": "acct-9",
+                },
+                "visibility": {
+                    "type": "role",
+                    "value": "Developers",
+                },
+                "comment": {
+                    "type": "doc",
+                    "version": 1,
+                    "content": [
+                        {
+                            "type": "paragraph",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": "Finished the implementation",
+                                }
+                            ],
+                        }
+                    ],
+                },
+            },
+            {"issueKey": "PROJ-2"},
+        ],
+    }
 
     class FakeJiraHelpers:
         def __init__(self, _api: object) -> None:
@@ -109,9 +149,81 @@ def test_worklog_report_raw_returns_tool_result(fake_ctx, monkeypatch) -> None:
     assert fake_ctx.error_messages == []
     assert isinstance(result, ToolResult)
     assert result.structured_content == payload
-    assert cast(Any, result.content[0]).text == json.dumps(
-        payload, indent=2, default=str
+    rendered_payload = cast(Any, result.content[0]).text
+    assert rendered_payload == json.dumps(payload, indent=2, default=str)
+    assert '"truncated": true' in rendered_payload
+    assert '"updateAuthor": {' in rendered_payload
+    assert '"visibility": {' in rendered_payload
+    assert '"comment": {' in rendered_payload
+
+
+def test_worklog_report_preserves_formatted_multi_row_details_and_truncation(
+    fake_ctx, monkeypatch
+) -> None:
+    formatted_report = dedent(
+        """\
+        Worklog report
+        Date range: 2026-06-12 to 2026-06-13 (UTC; end date inclusive)
+        Account: acct-1
+        JQL: project = PROJ
+        Issues scanned: 2 (max 2, truncated)
+        Rows: 2
+        Total: 1.50h (5400s)
+        Issue search total: 5
+        More issues matched the JQL but were not scanned.
+
+        --- [ROWS (2)] ---
+        - 2026-06-12T09:30:00Z — PROJ-1 — Alice (acct-1) — 1.00h
+          issueId: 10001 | project: PROJ | summary: First task | worklogId: wl-1
+          timeSpent: 1h / 3600s
+          started: 2026-06-12T09:30:00Z
+          created: 2026-06-12T09:35:00Z
+          updated: 2026-06-12T09:40:00Z
+          updateAuthor: Reviewer (acct-9)
+          visibility: role / Developers
+          comment: Finished the implementation
+        - 2026-06-13T10:15:00Z — PROJ-2 — Bob (acct-2) — 0.50h
+          issueId: 10002 | project: PROJ | summary: Second task | worklogId: wl-2
+          timeSpent: 30m / 1800s
+          started: 2026-06-13T10:15:00Z
+          created: 2026-06-13T10:20:00Z
+          updated: 2026-06-13T10:25:00Z
+        """
+    ).strip()
+
+    class FakeJiraHelpers:
+        def __init__(self, _api: object) -> None:
+            self.worklogs = cast(
+                Any,
+                type(
+                    "Worklogs",
+                    (),
+                    {
+                        "report": lambda _self, **_kwargs: HelperResult.text_only(
+                            formatted_report
+                        )
+                    },
+                )(),
+            )
+
+    monkeypatch.setattr(worklog_tool_module, "JiraHelpers", FakeJiraHelpers)
+
+    result = asyncio.run(
+        worklog_report(
+            "2026-06-12",
+            "2026-06-13",
+            "project = PROJ",
+            account_id="acct-1",
+            max_issues=2,
+            include_details=True,
+            ctx=fake_ctx,
+            api=cast(Any, object()),
+        )
     )
+
+    assert fake_ctx.info_messages == ["Building worklog report for JQL: project = PROJ"]
+    assert fake_ctx.error_messages == []
+    assert result == formatted_report
 
 
 def test_worklog_report_wraps_validation_errors(fake_ctx, monkeypatch) -> None:

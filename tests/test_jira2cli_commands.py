@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+from textwrap import dedent
 from types import SimpleNamespace
 from typing import Any, cast
 
@@ -362,6 +363,71 @@ def test_worklog_report_command_raw_output_uses_structured_data(
         "  ]\n"
         "}\n"
     )
+
+
+def test_worklog_report_command_preserves_formatted_multi_row_details_and_truncation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    formatted_report = dedent(
+        """\
+        Worklog report
+        Date range: 2026-06-12 to 2026-06-13 (UTC; end date inclusive)
+        Account: acct-1
+        JQL: project = PROJ
+        Issues scanned: 2 (max 2, truncated)
+        Rows: 2
+        Total: 1.50h (5400s)
+        Issue search total: 5
+        More issues matched the JQL but were not scanned.
+
+        --- [ROWS (2)] ---
+        - 2026-06-12T09:30:00Z — PROJ-1 — Alice (acct-1) — 1.00h
+          issueId: 10001 | project: PROJ | summary: First task | worklogId: wl-1
+          timeSpent: 1h / 3600s
+          started: 2026-06-12T09:30:00Z
+          created: 2026-06-12T09:35:00Z
+          updated: 2026-06-12T09:40:00Z
+          updateAuthor: Reviewer (acct-9)
+          visibility: role / Developers
+          comment: Finished the implementation
+        - 2026-06-13T10:15:00Z — PROJ-2 — Bob (acct-2) — 0.50h
+          issueId: 10002 | project: PROJ | summary: Second task | worklogId: wl-2
+          timeSpent: 30m / 1800s
+          started: 2026-06-13T10:15:00Z
+          created: 2026-06-13T10:20:00Z
+          updated: 2026-06-13T10:25:00Z
+        """
+    ).strip()
+
+    monkeypatch.setattr("jira2cli.client.get_api", lambda: object())
+    _patch_helpers(
+        monkeypatch,
+        "jira2cli.commands.worklogs",
+        worklogs={
+            "report": lambda **_: HelperResult.text_only(formatted_report),
+        },
+    )
+
+    result = runner.invoke(
+        app,
+        [
+            "worklog-report",
+            "--start-date",
+            "2026-06-12",
+            "--end-date",
+            "2026-06-13",
+            "--jql",
+            "project = PROJ",
+            "--account-id",
+            "acct-1",
+            "--max-issues",
+            "2",
+            "--include-details",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert result.stdout == f"{formatted_report}\n"
 
 
 def test_comments_command_raw_output_delegates_to_helpers(
