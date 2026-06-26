@@ -1,24 +1,30 @@
-.PHONY: lint format type-check test check check-ci clean help build build-jira2ai-core build-jira2mcp build-jira2cli build-all bump-version version-current release-prep release push-release-tag ensure-main-clean
+.PHONY: lint format type-check test test-mcp-e2e test-mcp-e2e-stdio test-mcp-e2e-write check check-ci clean help build build-jira2mcp build-jira2cli build-all bump-version version-current release-prep release push-release-tag ensure-main-clean
 
 PACKAGE ?= jira2mcp
 PART ?= patch
 VERSION_INPUT := $(or $(VERSION),$(v))
 MCP_PACKAGE_DIR := packages/jira2mcp
-CORE_PACKAGE_DIR := packages/jira2ai-core
 CLI_PACKAGE_DIR := packages/jira2cli
-CHECK_PATHS := $(CORE_PACKAGE_DIR)/src $(MCP_PACKAGE_DIR)/src $(CLI_PACKAGE_DIR)/src scripts tests
-TYPECHECK_PATHS := $(CORE_PACKAGE_DIR)/src/ $(MCP_PACKAGE_DIR)/src/ $(CLI_PACKAGE_DIR)/src/ scripts/
+CHECK_PATHS := $(MCP_PACKAGE_DIR)/src $(CLI_PACKAGE_DIR)/src scripts tests
+TYPECHECK_PATHS := $(MCP_PACKAGE_DIR)/src/ $(CLI_PACKAGE_DIR)/src/ scripts/
+PYTEST_NON_LIVE_ARGS := -m "not mcp_live"
+MCP_E2E_PATH := tests/e2e/jira2mcp_e2e
+MCP_E2E_READONLY_ARGS := $(MCP_E2E_PATH) -m "mcp_live and not mcp_write"
+MCP_E2E_STDIO_ARGS := $(MCP_E2E_PATH) -m "mcp_live and mcp_stdio and not mcp_write"
+MCP_E2E_WRITE_ARGS := $(MCP_E2E_PATH) -m "mcp_live and mcp_write"
 
 help:
 	@echo "Available targets:"
 	@echo "  lint             - Run ruff linting with auto-fix"
 	@echo "  format           - Run ruff formatting"
 	@echo "  type-check       - Run ty type checking"
-	@echo "  test             - Run pytest"
+	@echo "  test             - Run pytest excluding live MCP E2E tests"
+	@echo "  test-mcp-e2e     - Run live read-only MCP E2E tests"
+	@echo "  test-mcp-e2e-stdio - Run live stdio MCP E2E smoke tests"
+	@echo "  test-mcp-e2e-write - Run live write MCP E2E tests (requires JIRA_E2E_ALLOW_WRITE=1)"
 	@echo "  check            - Run mutating local checks (lint, format, type-check)"
 	@echo "  check-ci         - Run non-mutating CI-style checks, including tests"
 	@echo "  build            - Build the selected package (default: jira2mcp; override with PACKAGE=...)"
-	@echo "  build-jira2ai-core - Build jira2ai-core sdist and wheel"
 	@echo "  build-jira2mcp   - Build jira2mcp sdist and wheel"
 	@echo "  build-jira2cli   - Build jira2cli sdist and wheel"
 	@echo "  build-all        - Build all workspace packages"
@@ -44,7 +50,20 @@ type-check:
 
 # Run pytest
 test:
-	uv run pytest
+	uv run --locked python -m pytest $(PYTEST_NON_LIVE_ARGS)
+
+# Run live read-only MCP E2E tests
+test-mcp-e2e:
+	uv run --locked python -m pytest $(MCP_E2E_READONLY_ARGS)
+
+# Run live stdio MCP E2E smoke tests
+test-mcp-e2e-stdio:
+	uv run --locked python -m pytest $(MCP_E2E_STDIO_ARGS)
+
+# Run live write MCP E2E tests
+test-mcp-e2e-write:
+	@test "$(JIRA_E2E_ALLOW_WRITE)" = "1" || (echo "Set JIRA_E2E_ALLOW_WRITE=1 to run mcp_write tests." && exit 1)
+	uv run --locked python -m pytest $(MCP_E2E_WRITE_ARGS)
 
 # Run all checks
 check: lint format type-check
@@ -54,14 +73,11 @@ check-ci:
 	uv run --locked ruff check $(CHECK_PATHS)
 	uv run --locked ruff format --check $(CHECK_PATHS)
 	uv run --locked ty check $(TYPECHECK_PATHS)
-	uv run --locked pytest
+	uv run --locked python -m pytest $(PYTEST_NON_LIVE_ARGS)
 
 # Build sdist and wheel
 build: clean
 	uv build --package $(PACKAGE)
-
-build-jira2ai-core:
-	uv build --package jira2ai-core
 
 build-jira2mcp:
 	uv build --package jira2mcp
@@ -69,7 +85,7 @@ build-jira2mcp:
 build-jira2cli:
 	uv build --package jira2cli
 
-build-all: clean build-jira2ai-core build-jira2mcp build-jira2cli
+build-all: clean build-jira2mcp build-jira2cli
 
 # Print the current project version
 version-current:
@@ -84,7 +100,7 @@ bump-version:
 
 # Prepare a release before opening a PR to main
 release-prep:
-	@uv run --frozen python scripts/bump_version.py --package "$(PACKAGE)" --validate-release --require-published-core
+	@uv run --frozen python scripts/bump_version.py --package "$(PACKAGE)" --validate-release
 	$(MAKE) bump-version PACKAGE="$(PACKAGE)" VERSION="$(VERSION_INPUT)" PART="$(PART)"
 	uv lock
 	$(MAKE) check-ci
@@ -122,7 +138,7 @@ push-release-tag:
 
 # Clean Python cache files
 clean:
-	find . -type f -name "*.py[co]" -delete
-	find . -type d -name "__pycache__" -delete
-	find . -type d -name "*.egg-info" -prune -exec rm -rf {} +
-	rm -rf .mypy_cache/ .ty/ .ruff_cache/ .pytest_cache/ dist/ build/ $(CORE_PACKAGE_DIR)/dist/ $(CORE_PACKAGE_DIR)/build/ $(MCP_PACKAGE_DIR)/dist/ $(MCP_PACKAGE_DIR)/build/ $(CLI_PACKAGE_DIR)/dist/ $(CLI_PACKAGE_DIR)/build/
+	find . -path ./.git -prune -o -path ./.venv -prune -o -type f -name "*.py[co]" -exec rm -f {} +
+	find . -path ./.git -prune -o -path ./.venv -prune -o -type d -name "__pycache__" -exec rm -rf {} +
+	find . -path ./.git -prune -o -path ./.venv -prune -o -type d -name "*.egg-info" -exec rm -rf {} +
+	rm -rf .mypy_cache/ .ty/ .ruff_cache/ .pytest_cache/ dist/ build/ $(MCP_PACKAGE_DIR)/dist/ $(MCP_PACKAGE_DIR)/build/ $(CLI_PACKAGE_DIR)/dist/ $(CLI_PACKAGE_DIR)/build/
