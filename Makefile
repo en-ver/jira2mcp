@@ -138,7 +138,7 @@ push-release-tag:
 
 # Clean Python cache files
 clean:
-	find . -path ./.git -prune -o -path ./.venv -prune -o -type f -name "*.py[co]" -delete
+	find . -path ./.git -prune -o -path ./.venv -prune -o -type f -name "*.py[co]" -exec rm -f {} +
 	find . -path ./.git -prune -o -path ./.venv -prune -o -type d -name "__pycache__" -exec rm -rf {} +
 	find . -path ./.git -prune -o -path ./.venv -prune -o -type d -name "*.egg-info" -exec rm -rf {} +
 	rm -rf .mypy_cache/ .ty/ .ruff_cache/ .pytest_cache/ dist/ build/ $(MCP_PACKAGE_DIR)/dist/ $(MCP_PACKAGE_DIR)/build/ $(CLI_PACKAGE_DIR)/dist/ $(CLI_PACKAGE_DIR)/build/
