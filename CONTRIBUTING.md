@@ -34,6 +34,19 @@ make build-all
 uv run --package jira2cli jira2cli --help
 ```
 
+## `jira2cli` skill/CLI alignment rule
+
+Any future change to `skills/jira2cli`, `packages/jira2cli/src/jira2cli/cli.py`, `packages/jira2cli/src/jira2cli/commands/*.py`, or `packages/jira2cli/README.md` must verify that the skill docs still match the current CLI.
+
+Required alignment check:
+
+- compare the skill text against `packages/jira2cli/src/jira2cli/cli.py`
+- compare the skill text against `packages/jira2cli/src/jira2cli/commands/*.py`
+- compare the skill text against `packages/jira2cli/README.md`
+- verify the documented command surface and options against current help output from `uv run --package jira2cli jira2cli --help` and each command `--help`
+
+Do not merge `jira2cli` skill or CLI docs/implementation changes without this verification.
+
 `make test` runs the pytest suite.
 
 `make check` runs the mutating local lint, format, and type-check targets.

@@ -35,6 +35,22 @@ uv run --package jira2cli jira2cli fields --project-key PROJ
 uv run --package jira2cli jira2cli worklog-report --start-date 2026-06-12 --end-date 2026-06-13 --jql 'issue = PROJ-123'
 ```
 
+## Pi skill reference
+
+The Pi skill reference lives at repo-root `skills/jira2cli/`.
+
+It is CLI-only, not a `jira2mcp`/MCP skill, and documents metadata-first Jira workflows plus safety rules for agents using `jira2cli`.
+
+Consumers can use it as a reference/template for building their own Pi or agent skills. Load it from a local source checkout via an explicit skill path, for example:
+
+```json
+{
+  "skills": ["/Users/enver/github/personal/jira2ai/skills/jira2cli"]
+}
+```
+
+Do not assume Pi auto-discovers this skill from a Python wheel, PyPI install, or `uvx` install.
+
 ## Worklog reports
 
 Use `jira2cli worklog-report` to build a report for issues selected by JQL.

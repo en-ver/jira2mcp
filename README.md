@@ -137,6 +137,22 @@ uv run --package jira2cli jira2cli worklog-report --start-date 2026-06-12 --end-
 
 `jira2cli` is available for local/development use in this workspace. Continue to use `uvx jira2mcp` for MCP installs.
 
+## Pi skill reference
+
+A Pi skill reference lives at `skills/jira2cli/` in the repository root.
+
+It is CLI-only and documents metadata-first Jira workflows and safety rules for agents using `jira2cli`; `jira2mcp`/MCP is out of scope for this skill.
+
+Consumers can use it as a reference/template for building their own Pi or agent skills. Load it from a local source checkout via an explicit skill path, for example:
+
+```json
+{
+  "skills": ["/Users/enver/github/personal/jira2ai/skills/jira2cli"]
+}
+```
+
+Do not assume Pi auto-discovers this skill from a Python wheel, PyPI install, or `uvx` install.
+
 ## Key features
 
 - **Markdown in, Markdown out** — write descriptions and comments in Markdown; they're auto-converted to Atlassian Document Format (ADF). ADF fields from Jira are converted back to Markdown.
@@ -152,6 +168,7 @@ This repository is a `uv` workspace with two packages:
 
 - `packages/jira2mcp` — the FastMCP server/adapter package published as `jira2mcp`.
 - `packages/jira2cli` — the CLI adapter package for local/dev use.
+- `skills/jira2cli` — the repo-root CLI-only Pi skill reference/template for agents using `jira2cli`.
 
 End-user MCP setup stays the same: use `uvx jira2mcp` directly or `claude mcp add jira -- uvx jira2mcp`.
 
