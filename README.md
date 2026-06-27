@@ -190,9 +190,11 @@ uv sync --all-packages --group dev
 Use either environment variables or an explicit CLI flag:
 
 ```bash
-uv run --package jira2cli jira2cli auth-status
-uv run --package jira2cli jira2cli --credentials-file ~/.config/jira-cloud.json me --json
+uv run jira2cli auth-status
+uv run jira2cli --credentials-file ~/.config/jira-cloud.json me --json
 ```
+
+`uv run jira2cli ...` is the normal workspace-root form here. Use `uv run --package jira2cli jira2cli ...` only when you want explicit advanced workspace-member selection.
 
 If `--credentials-file` is omitted, `jira2cli` uses `JIRA_URL`, `JIRA_USER`, and `JIRA_API_TOKEN` from the environment.
 
@@ -213,15 +215,15 @@ There is **no** default credentials path and **no** implicit `JIRA_CREDENTIALS_F
 Representative commands:
 
 ```bash
-uv run --package jira2cli jira2cli --help
-uv run --package jira2cli jira2cli read PROJ-123
-uv run --package jira2cli jira2cli project PROJ --json
-uv run --package jira2cli jira2cli transitions PROJ-123 --json
-uv run --package jira2cli jira2cli filters --query mine --json
-uv run --package jira2cli jira2cli filter-run 10400 --field key --field summary --json
-uv run --package jira2cli jira2cli attachment-list PROJ-123 --json
-uv run --package jira2cli jira2cli worklogs PROJ-123 --json
-uv run --package jira2cli jira2cli worklog-report --start-date 2026-06-12 --end-date 2026-06-13 --jql 'issue = PROJ-123'
+uv run jira2cli --help
+uv run jira2cli read PROJ-123
+uv run jira2cli project PROJ --json
+uv run jira2cli transitions PROJ-123 --json
+uv run jira2cli filters --query mine --json
+uv run jira2cli filter-run 10400 --field key --field summary --json
+uv run jira2cli attachment-list PROJ-123 --json
+uv run jira2cli worklogs PROJ-123 --json
+uv run jira2cli worklog-report --start-date 2026-06-12 --end-date 2026-06-13 --jql 'issue = PROJ-123'
 ```
 
 Continue to use `uvx jira2mcp` for MCP installs.

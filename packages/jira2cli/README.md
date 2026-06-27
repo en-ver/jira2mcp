@@ -41,13 +41,15 @@ From the workspace root:
 
 ```bash
 uv sync --all-packages --group dev
-uv run --package jira2cli jira2cli --help
-uv run --package jira2cli jira2cli auth-status
-uv run --package jira2cli jira2cli --credentials-file ~/.config/jira-cloud.json me --json
-uv run --package jira2cli jira2cli read PROJ-123
-uv run --package jira2cli jira2cli transitions PROJ-123 --json
-uv run --package jira2cli jira2cli filter-run 10400 --field key --field summary --json
+uv run jira2cli --help
+uv run jira2cli auth-status
+uv run jira2cli --credentials-file ~/.config/jira-cloud.json me --json
+uv run jira2cli read PROJ-123
+uv run jira2cli transitions PROJ-123 --json
+uv run jira2cli filter-run 10400 --field key --field summary --json
 ```
+
+Use `uv run --package jira2cli jira2cli ...` only when you want explicit advanced workspace-member selection.
 
 ## Command surface
 

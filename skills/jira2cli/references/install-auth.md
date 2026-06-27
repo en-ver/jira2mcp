@@ -8,10 +8,10 @@ From the repository root:
 
 ```sh
 uv sync --all-packages --group dev
-uv run --package jira2cli jira2cli --help
+uv run --locked jira2cli --help
 ```
 
-Use the same `uv run --package jira2cli jira2cli ...` prefix for the other commands in this skill.
+Use the same `uv run jira2cli ...` prefix for the other commands in this skill.
 
 Do not claim or rely on `uvx jira2cli`, `pip install jira2cli`, or wheel/PyPI install paths unless the repo docs change first.
 
@@ -20,7 +20,7 @@ Do not claim or rely on `uvx jira2cli`, `pip install jira2cli`, or wheel/PyPI in
 Supported credential modes:
 
 1. Explicit CLI flag:
-   - `uv run --package jira2cli jira2cli --credentials-file <path> auth-status`
+   - `uv run jira2cli --credentials-file <path> auth-status`
 2. Environment variables when the flag is omitted:
    - `JIRA_URL=https://<site>.atlassian.net`
    - `JIRA_USER=<email>`
@@ -49,9 +49,9 @@ Rules:
 
 After the environment is configured, verify access with a non-mutating command such as:
 
-- `uv run --package jira2cli jira2cli auth-status`
-- `uv run --package jira2cli jira2cli me --json`
-- `uv run --package jira2cli jira2cli projects --json`
-- `uv run --package jira2cli jira2cli projects --query <text> --json`
+- `uv run --locked jira2cli auth-status`
+- `uv run --locked jira2cli me --json`
+- `uv run --locked jira2cli projects --json`
+- `uv run --locked jira2cli projects --query <text> --json`
 
 If verification fails, fix the environment values or the explicit credentials file instead of guessing or exposing the token.
